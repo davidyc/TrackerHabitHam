@@ -29,7 +29,6 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     try
     {
-        context.Database.EnsureCreated();
         context.Database.Migrate();
         Console.WriteLine("Database migration completed successfully.");
     }
