@@ -24,6 +24,7 @@ namespace TrackerHabiHamApi.Services
             {12, "M"}
         };
 
+        private readonly string _credentialsPath;
         private readonly SheetsService _service;
         private readonly string _spreadsheetId;
         private readonly ILogger<GoogleSheetsService> _logger;
@@ -31,11 +32,11 @@ namespace TrackerHabiHamApi.Services
         public GoogleSheetsService(IConfiguration configuration, ILogger<GoogleSheetsService> logger)
         {
             _logger = logger;
-            var credentialsFileName = configuration["GoogleSheets:CredentialsFileName"] ?? throw new InvalidOperationException("Google Sheets credentials file name not configured");
+            _credentialsPath = configuration["GoogleSheets:CredentialsFilePath"] ?? throw new InvalidOperationException("Google Sheets credentials file path not configured");
             var spreadsheetId = configuration["GoogleSheets:SpreadsheetId"] ?? throw new InvalidOperationException("Google Sheets spreadsheet ID not configured");
+            _logger.LogInformation(_credentialsPath);
             
-            var credentialsPath = Path.Combine(AppContext.BaseDirectory, credentialsFileName);
-            _service = GetSheetsService(credentialsPath, "GoogleSheetsServiceApp");
+            _service = GetSheetsService(_credentialsPath, "GoogleSheetsServiceApp");
             _spreadsheetId = spreadsheetId;
         }
 
@@ -133,6 +134,11 @@ namespace TrackerHabiHamApi.Services
             }
 
             return result;
+        }
+
+        public bool CredentialExists()
+        {
+            return File.Exists(_credentialsPath);
         }
     }
 }

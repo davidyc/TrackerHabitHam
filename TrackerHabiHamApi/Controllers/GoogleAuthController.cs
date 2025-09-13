@@ -17,12 +17,10 @@ namespace TrackerHabiHamApi.Controllers
         }
 
         [HttpGet("check-credentials")]
-        public IActionResult CheckCredentials([FromQuery] string path = "just-turbine-406810-ec3a22d281b9.json")
-        {
-            var fullPath = Path.Combine(AppContext.BaseDirectory, path);
-            var exists = System.IO.File.Exists(fullPath); 
-
-            return Ok(new { file = fullPath, exists });
+        public IActionResult CheckCredentials()
+        {  
+            var exists = _googleSheetsService.CredentialExists();
+            return Ok($"File exist: {exists}");
         }
 
         [HttpGet("Period")]

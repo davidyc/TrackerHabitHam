@@ -12,7 +12,9 @@ namespace TrackerHabiHamApi.Services
         {
             _httpClient = httpClient;
             _botToken = configuration["Telegram:BotToken"] ?? throw new InvalidOperationException("Telegram bot token not configured");
+          
             _logger = logger;
+            _logger.LogInformation(_botToken);
         }
 
         public async Task SendMessageAsync(long chatId, string message)

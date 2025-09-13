@@ -7,6 +7,7 @@ namespace TrackerHabiHamApi.Services
     {
         string WriteNumberToTodayRow(string number);
         IEnumerable<MounthWeight> GetMounth(int year, int mounth);
+        bool CredentialExists();
     }
 }
 

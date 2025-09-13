@@ -51,6 +51,7 @@ yarn.lock
 .env
 .env.*
 **/just-turbine-406810-ec3a22d281b9.json
+Properties/launchSettings.json
 
 # Logs
 logs/
