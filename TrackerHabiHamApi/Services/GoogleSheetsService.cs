@@ -23,7 +23,6 @@ namespace TrackerHabiHamApi.Services
             {11, "L"},
             {12, "M"}
         };
-
         private readonly string _credentialsPath;
         private readonly SheetsService _service;
         private readonly string _spreadsheetId;
@@ -32,12 +31,9 @@ namespace TrackerHabiHamApi.Services
         public GoogleSheetsService(IConfiguration configuration, ILogger<GoogleSheetsService> logger)
         {
             _logger = logger;
-            _credentialsPath = configuration["GoogleSheets:CredentialsFilePath"] ?? throw new InvalidOperationException("Google Sheets credentials file path not configured");
-            var spreadsheetId = configuration["GoogleSheets:SpreadsheetId"] ?? throw new InvalidOperationException("Google Sheets spreadsheet ID not configured");
-            _logger.LogInformation(_credentialsPath);
-            
+            _credentialsPath = configuration["GoogleSheets:CredentialsFilePath"] ?? throw new InvalidOperationException("Google Sheets credentials file path not configured");            
             _service = GetSheetsService(_credentialsPath, "GoogleSheetsServiceApp");
-            _spreadsheetId = spreadsheetId;
+            _spreadsheetId = configuration["GoogleSheets:SpreadsheetId"] ?? throw new InvalidOperationException("Google Sheets spreadsheet ID not configured"); ;
         }
 
         public string WriteNumberToTodayRow(string number)
