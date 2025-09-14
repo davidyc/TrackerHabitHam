@@ -1,0 +1,195 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HabihamTrackerApp.MainPage">
+
+    <VerticalStackLayout
+        Padding="0"
+        Spacing="0"
+        VerticalOptions="Fill">
+
+        <!-- Табы -->
+        <Grid
+            BackgroundColor="#F5F5F5"
+            Padding="0"
+            RowDefinitions="Auto"
+            ColumnDefinitions="*,*">
+            
+            <Button
+                x:Name="ApiTab"
+                Grid.Row="0"
+                Grid.Column="0"
+                Text="Аналитика"
+                BackgroundColor="#4A90E2"
+                TextColor="White"
+                FontSize="16"
+                FontAttributes="Bold"
+                CornerRadius="0"
+                HeightRequest="60"
+                Clicked="OnApiTabClicked" />
+            
+            <Button
+                x:Name="SyncTab"
+                Grid.Row="0"
+                Grid.Column="1"
+                Text="Синхронизация"
+                BackgroundColor="#E0E0E0"
+                TextColor="#666666"
+                FontSize="16"
+                FontAttributes="Bold"
+                CornerRadius="0"
+                HeightRequest="60"
+                Clicked="OnSyncTabClicked" />
+        </Grid>
+
+        <!-- Контент табов -->
+        <ScrollView>
+            <VerticalStackLayout
+                Padding="15"
+                Spacing="20"
+                VerticalOptions="Fill">
+
+                <!-- Блок 1: API вызов -->
+                <Frame
+                    x:Name="ApiFrame"
+                    BackgroundColor="#F0F8FF"
+                    BorderColor="#4A90E2"
+                    CornerRadius="15"
+                    Padding="25"
+                    HasShadow="True"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="Start"
+                    IsVisible="True">
+                    
+                    <VerticalStackLayout Spacing="20">
+                        <Label
+                            Text="Аналитика"
+                            FontSize="20"
+                            FontAttributes="Bold"
+                            TextColor="#2C3E50"
+                            HorizontalOptions="Center" />
+
+                        <!-- Поля аналитики -->
+                        <Frame
+                            BackgroundColor="White"
+                            CornerRadius="10"
+                            Padding="15"
+                            HasShadow="False">
+                            
+                            <VerticalStackLayout Spacing="10">
+                                <Label
+                                    x:Name="StartDateLabel"
+                                    Text="Период начала: -"
+                                    FontSize="14"
+                                    TextColor="#2C3E50" />
+                                
+                                <Label
+                                    x:Name="EndDateLabel"
+                                    Text="Период окончания: -"
+                                    FontSize="14"
+                                    TextColor="#2C3E50" />
+                                
+                                <Label
+                                    x:Name="MinValueLabel"
+                                    Text="Минимальное значение: -"
+                                    FontSize="14"
+                                    TextColor="#2C3E50" />
+                                
+                                <Label
+                                    x:Name="MaxValueLabel"
+                                    Text="Максимальное значение: -"
+                                    FontSize="14"
+                                    TextColor="#2C3E50" />
+                                
+                                <Label
+                                    x:Name="AverageLabel"
+                                    Text="Среднее значение: -"
+                                    FontSize="14"
+                                    TextColor="#2C3E50" />
+                                
+                                <Label
+                                    x:Name="StartValueLabel"
+                                    Text="Начальное значение: -"
+                                    FontSize="14"
+                                    TextColor="#2C3E50" />
+                                
+                                <Label
+                                    x:Name="EndValueLabel"
+                                    Text="Конечное значение: -"
+                                    FontSize="14"
+                                    TextColor="#2C3E50" />
+                                
+                                <Label
+                                    x:Name="ChangeLabel"
+                                    Text="Изменение: -"
+                                    FontSize="14"
+                                    TextColor="#2C3E50" />
+                            </VerticalStackLayout>
+                        </Frame>
+
+                        <Button
+                            x:Name="ApiBtn"
+                            Text="Получить аналитику" 
+                            Clicked="OnApiButtonClicked"
+                            HorizontalOptions="Fill"
+                            BackgroundColor="#4A90E2"
+                            TextColor="White"
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            CornerRadius="10"
+                            HeightRequest="50" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Блок 2: Синхронизация -->
+                <Frame
+                    x:Name="SyncFrame"
+                    BackgroundColor="#F0FFF0"
+                    BorderColor="#50C878"
+                    CornerRadius="15"
+                    Padding="25"
+                    HasShadow="True"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="Start"
+                    IsVisible="False">
+                    
+                    <VerticalStackLayout Spacing="20">
+                        <Label
+                            Text="Синхронизация"
+                            FontSize="20"
+                            FontAttributes="Bold"
+                            TextColor="#2C3E50"
+                            HorizontalOptions="Center" />
+
+                        <Label
+                            x:Name="SyncLabel"
+                            Text="Статус синхронизации"
+                            HorizontalOptions="Fill"
+                            HorizontalTextAlignment="Center"
+                            FontSize="14"
+                            TextColor="Gray"
+                            BackgroundColor="White"
+                            Padding="15"
+                            MinimumHeightRequest="80"
+                            VerticalTextAlignment="Center" />
+
+                        <Button
+                            x:Name="SyncBtn"
+                            Text="Синхронизировать" 
+                            Clicked="OnSyncButtonClicked"
+                            HorizontalOptions="Fill"
+                            BackgroundColor="#50C878"
+                            TextColor="White"
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            CornerRadius="10"
+                            HeightRequest="50" />
+                    </VerticalStackLayout>
+                </Frame>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </VerticalStackLayout>
+
+</ContentPage>
