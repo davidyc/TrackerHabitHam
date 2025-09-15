@@ -66,9 +66,14 @@ namespace HabihamTrackerApp
             SyncTab.BackgroundColor = Color.FromArgb("#404040");
             SyncTab.TextColor = Color.FromArgb("#CCCCCC");
             
+            // Деактивируем Weight таб
+            WeightTab.BackgroundColor = Color.FromArgb("#404040");
+            WeightTab.TextColor = Color.FromArgb("#CCCCCC");
+            
             // Показываем API блок, скрываем Sync блок
             ApiFrame.IsVisible = true;
             SyncFrame.IsVisible = false;
+            WeightFrame.IsVisible = false;
         }
 
         private void OnSyncTabClicked(object sender, EventArgs e)
@@ -81,9 +86,83 @@ namespace HabihamTrackerApp
             ApiTab.BackgroundColor = Color.FromArgb("#404040");
             ApiTab.TextColor = Color.FromArgb("#CCCCCC");
             
+            // Деактивируем Weight таб
+            WeightTab.BackgroundColor = Color.FromArgb("#404040");
+            WeightTab.TextColor = Color.FromArgb("#CCCCCC");
+            
             // Показываем Sync блок, скрываем API блок
             SyncFrame.IsVisible = true;
             ApiFrame.IsVisible = false;
+            WeightFrame.IsVisible = false;
+        }
+
+        private void OnWeightTabClicked(object sender, EventArgs e)
+        {
+            // Активируем Weight таб
+            WeightTab.BackgroundColor = Color.FromArgb("#E67E22");
+            WeightTab.TextColor = Colors.White;
+
+            // Деактивируем остальные
+            ApiTab.BackgroundColor = Color.FromArgb("#404040");
+            ApiTab.TextColor = Color.FromArgb("#CCCCCC");
+            SyncTab.BackgroundColor = Color.FromArgb("#404040");
+            SyncTab.TextColor = Color.FromArgb("#CCCCCC");
+
+            // Показываем Weight блок
+            WeightFrame.IsVisible = true;
+            ApiFrame.IsVisible = false;
+            SyncFrame.IsVisible = false;
+        }
+
+        private async void OnWeightSubmitClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                WeightSubmitBtn.IsEnabled = false;
+                WeightSubmitBtn.Text = "Отправка...";
+                WeightStatusLabel.TextColor = Color.FromArgb("#4A90E2");
+                WeightStatusLabel.Text = "Отправляем вес...";
+
+                if (!double.TryParse(WeightEntry.Text?.Replace(',', '.'), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var weightValue))
+                {
+                    WeightStatusLabel.TextColor = Color.FromArgb("#FF6B6B");
+                    WeightStatusLabel.Text = "Некорректный формат веса";
+                    return;
+                }
+
+                var payload = new
+                {
+                    date = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+                    weight = weightValue.ToString()
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PutAsync("https://trackerhabitham.onrender.com/api/Weight", content);
+                var responseText = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    WeightStatusLabel.TextColor = Color.FromArgb("#4CAF50");
+                    WeightStatusLabel.Text = "Вес отправлен успешно";
+                }
+                else
+                {
+                    WeightStatusLabel.TextColor = Color.FromArgb("#FF6B6B");
+                    WeightStatusLabel.Text = $"Ошибка: {response.StatusCode} {responseText}";
+                }
+            }
+            catch (Exception ex)
+            {
+                WeightStatusLabel.TextColor = Color.FromArgb("#FF6B6B");
+                WeightStatusLabel.Text = $"Ошибка отправки: {ex.Message}";
+            }
+            finally
+            {
+                WeightSubmitBtn.IsEnabled = true;
+                WeightSubmitBtn.Text = "Отправить вес";
+            }
         }
 
         private void OnStartDateSelected(object sender, DateChangedEventArgs e)

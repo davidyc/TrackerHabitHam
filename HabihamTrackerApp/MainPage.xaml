@@ -14,7 +14,7 @@
             BackgroundColor="#2D2D2D"
             Padding="0"
             RowDefinitions="Auto"
-            ColumnDefinitions="*,*">
+            ColumnDefinitions="*,*,*">
             
             <Button
                 x:Name="ApiTab"
@@ -41,6 +41,19 @@
                 CornerRadius="0"
                 HeightRequest="60"
                 Clicked="OnSyncTabClicked" />
+
+            <Button
+                x:Name="WeightTab"
+                Grid.Row="0"
+                Grid.Column="2"
+                Text="Вес"
+                BackgroundColor="#404040"
+                TextColor="#CCCCCC"
+                FontSize="16"
+                FontAttributes="Bold"
+                CornerRadius="0"
+                HeightRequest="60"
+                Clicked="OnWeightTabClicked" />
         </Grid>
 
         <!-- Контент табов -->
@@ -235,6 +248,58 @@
                             Clicked="OnSyncButtonClicked"
                             HorizontalOptions="Fill"
                             BackgroundColor="#50C878"
+                            TextColor="White"
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            CornerRadius="10"
+                            HeightRequest="50" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Блок 3: Вес за сегодня -->
+                <Frame
+                    x:Name="WeightFrame"
+                    BackgroundColor="#2D2D2D"
+                    BorderColor="#E67E22"
+                    CornerRadius="15"
+                    Padding="25"
+                    HasShadow="True"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="Start"
+                    IsVisible="False">
+                    <VerticalStackLayout Spacing="20">
+                        <Label
+                            Text="Вес за сегодня"
+                            FontSize="20"
+                            FontAttributes="Bold"
+                            TextColor="#FFFFFF"
+                            HorizontalOptions="Center" />
+
+                        <Frame BackgroundColor="#404040" CornerRadius="10" Padding="15" HasShadow="False">
+                            <VerticalStackLayout Spacing="10">
+                                <Label Text="Введите вес (кг)" FontSize="14" TextColor="#CCCCCC" />
+                                <Entry x:Name="WeightEntry" Keyboard="Numeric" Placeholder="Напр. 82.5" FontSize="16" TextColor="#FFFFFF" BackgroundColor="#555555" />
+                            </VerticalStackLayout>
+                        </Frame>
+
+                        <Label
+                            x:Name="WeightStatusLabel"
+                            Text=""
+                            HorizontalOptions="Fill"
+                            HorizontalTextAlignment="Center"
+                            FontSize="14"
+                            TextColor="#CCCCCC"
+                            BackgroundColor="#404040"
+                            Padding="15"
+                            MinimumHeightRequest="60"
+                            VerticalTextAlignment="Center" />
+
+                        <Button
+                            x:Name="WeightSubmitBtn"
+                            Text="Отправить вес"
+                            Clicked="OnWeightSubmitClicked"
+                            HorizontalOptions="Fill"
+                            BackgroundColor="#E67E22"
                             TextColor="White"
                             FontSize="16"
                             FontAttributes="Bold"

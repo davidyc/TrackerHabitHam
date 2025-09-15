@@ -7,10 +7,12 @@ namespace TrackerHabiHamApi.Services
     public class WeightService : IWeightService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IGoogleSheetsService _googleSheetsService;
 
-        public WeightService(ApplicationDbContext context)
+        public WeightService(ApplicationDbContext context, IGoogleSheetsService googleSheetsService)
         {
             _context = context;
+            _googleSheetsService = googleSheetsService;
         }
 
         public async Task<IEnumerable<MounthWeight>> GetFromPeriod(DateTime? start, DateTime? end)
@@ -48,11 +50,13 @@ namespace TrackerHabiHamApi.Services
 
                 _context.MounthWeights.Add(weightRecord);
                 await _context.SaveChangesAsync();
+                _googleSheetsService.WriteNumberToTodayRow(weight);
                 return weightRecord;
             }
               
             existingWeight.Weight = weight;
             await _context.SaveChangesAsync();
+            _googleSheetsService.WriteNumberToTodayRow(weight);
             return existingWeight;
         }
 
