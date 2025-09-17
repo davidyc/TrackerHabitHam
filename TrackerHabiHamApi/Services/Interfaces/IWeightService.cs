@@ -4,10 +4,9 @@ namespace TrackerHabiHamApi.Services
 {
     public interface IWeightService
     {
-        Task<IEnumerable<MounthWeight>> GetFromPeriod(DateTime? start, DateTime? end);
+        Task<IEnumerable<MounthWeight>> GetFromPeriod(DateOnly? start, DateOnly? end);
 
-
-        Task<MounthWeight?> UpdateWeightAsync(DateTime date, string weight);
+        Task<MounthWeight?> UpdateWeightAsync(DateOnly date, string weight);
 
         Task<int> UpsertManyAsync(IEnumerable<MounthWeight> items);
     }

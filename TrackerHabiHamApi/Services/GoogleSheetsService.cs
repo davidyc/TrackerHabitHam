@@ -124,7 +124,7 @@ namespace TrackerHabiHamApi.Services
 
                 result.Add(new MounthWeight
                 {
-                    Date = new DateTime(year, mounth, day),
+                    Date = DateOnly.FromDateTime(new DateTime(year, mounth, day)),
                     Weight = weight
                 });
             }

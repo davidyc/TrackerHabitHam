@@ -16,14 +16,14 @@ namespace TrackerHabiHamApi.Controllers
         }
 
         [HttpGet("summary")]
-        public async Task<ActionResult<WeightSummaryDto>> GetSummary([FromQuery] DateTime? start, [FromQuery] DateTime? end)
+        public async Task<ActionResult<WeightSummaryDto>> GetSummary([FromQuery] DateOnly? start, [FromQuery] DateOnly? end)
         {
             var result = await _service.GetSummaryAsync(start, end);
             return Ok(result);
         }
 
         [HttpGet("series")]
-        public async Task<ActionResult<IReadOnlyList<WeightPointDto>>> GetSeries([FromQuery] DateTime? start, [FromQuery] DateTime? end)
+        public async Task<ActionResult<IReadOnlyList<WeightPointDto>>> GetSeries([FromQuery] DateOnly? start, [FromQuery] DateOnly? end)
         {
             var result = await _service.GetSeriesAsync(start, end);
             return Ok(result);

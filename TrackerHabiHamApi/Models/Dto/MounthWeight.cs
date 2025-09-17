@@ -5,7 +5,7 @@ namespace TrackerHabiHamApi.Models.Dto
     public class MounthWeight
     {
         [Key]
-        public DateTime Date { get; set; }
+        public DateOnly Date { get; set; }
         
         [Required]
         [MaxLength(50)]
