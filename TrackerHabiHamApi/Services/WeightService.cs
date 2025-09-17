@@ -15,36 +15,36 @@ namespace TrackerHabiHamApi.Services
             _googleSheetsService = googleSheetsService;
         }
 
-        public async Task<IEnumerable<MounthWeight>> GetFromPeriod(DateTime? start, DateTime? end)
+        public async Task<IEnumerable<MounthWeight>> GetFromPeriod(DateOnly? start, DateOnly? end)
         {
             if (!start.HasValue)
             {
-                start = new DateTime(DateTime.UtcNow.Year, 1, 1);
+                start = DateOnly.FromDateTime(new DateTime(DateTime.UtcNow.Year, 1, 1));
             }
 
-            var now = DateTime.UtcNow.Date;
+            var now = DateOnly.FromDateTime(DateTime.UtcNow.Date);
 
-            if (!end.HasValue || end > start || end > now)
+            if (!end.HasValue || end.Value > start.Value || end.Value > now)
             {
                 end = now;
             }
 
             return await _context.MounthWeights
-                   .Where(w => w.Date.Date >= start.Value.Date && w.Date.Date <= end.Value.Date)
+                   .Where(w => w.Date >= start.Value && w.Date <= end.Value)
                    .OrderBy(w => w.Date)
                    .ToListAsync();
         }
 
-        public async Task<MounthWeight?> UpdateWeightAsync(DateTime date, string weight)
+        public async Task<MounthWeight?> UpdateWeightAsync(DateOnly date, string weight)
         {
             var existingWeight = await _context.MounthWeights
-                .FirstOrDefaultAsync(w => w.Date.Date == date.Date);
+                .FirstOrDefaultAsync(w => w.Date == date);
 
             if (existingWeight == null)
             {
                 var weightRecord = new MounthWeight
                 {
-                    Date = date.Date,
+                    Date = date,
                     Weight = weight
                 };
 
@@ -63,7 +63,7 @@ namespace TrackerHabiHamApi.Services
         public async Task<int> UpsertManyAsync(IEnumerable<MounthWeight> items)
         {
             var itemList = items
-                .Select(i => new MounthWeight { Date = i.Date.Date, Weight = i.Weight })
+                .Select(i => new MounthWeight { Date = i.Date, Weight = i.Weight })
                 .ToList();
 
             if (itemList.Count == 0)
@@ -71,19 +71,19 @@ namespace TrackerHabiHamApi.Services
                 return 0;
             }
 
-            var dates = itemList.Select(i => i.Date.Date).ToList();
+            var dates = itemList.Select(i => i.Date).ToList();
             var existing = await _context.MounthWeights
-                .Where(w => dates.Contains(w.Date.Date))
+                .Where(w => dates.Contains(w.Date))
                 .ToListAsync();
 
-            var existingByDate = existing.ToDictionary(w => w.Date.Date, w => w);
+            var existingByDate = existing.ToDictionary(w => w.Date, w => w);
 
             var inserts = new List<MounthWeight>();
             var updates = new List<MounthWeight>();
 
             foreach (var item in itemList)
             {
-                if (!existingByDate.TryGetValue(item.Date.Date, out var found))
+                if (!existingByDate.TryGetValue(item.Date, out var found))
                 {
                     inserts.Add(item);
                 }
@@ -98,8 +98,7 @@ namespace TrackerHabiHamApi.Services
             {
                 await _context.MounthWeights.AddRangeAsync(inserts);
             }
-
-            // Updates are tracked already; SaveChanges will persist modifications
+                                   
             var affected = inserts.Count + updates.Count;
             if (affected > 0)
             {

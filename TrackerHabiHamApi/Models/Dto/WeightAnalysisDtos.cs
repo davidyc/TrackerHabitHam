@@ -2,8 +2,8 @@ namespace TrackerHabiHamApi.Models.Dto
 {
     public class WeightSummaryDto
     {
-        public DateTime Start { get; set; }
-        public DateTime End { get; set; }
+        public DateOnly Start { get; set; }
+        public DateOnly End { get; set; }
         public double? Min { get; set; }
         public double? Max { get; set; }
         public double? Average { get; set; }
@@ -14,7 +14,7 @@ namespace TrackerHabiHamApi.Models.Dto
 
     public class WeightPointDto
     {
-        public DateTime Date { get; set; }
+        public DateOnly Date { get; set; }
         public double? Value { get; set; }
     }
 }

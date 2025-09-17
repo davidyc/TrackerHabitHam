@@ -13,12 +13,12 @@ namespace TrackerHabiHamApi.Services
             _context = context;
         }
 
-        public async Task<WeightSummaryDto> GetSummaryAsync(DateTime? start, DateTime? end)
+        public async Task<WeightSummaryDto> GetSummaryAsync(DateOnly? start, DateOnly? end)
         {
             var (from, to) = NormalizeRange(start, end);
 
             var query = _context.MounthWeights
-                .Where(w => w.Date.Date >= from && w.Date.Date <= to)
+                .Where(w => w.Date >= from && w.Date <= to)
                 .OrderBy(w => w.Date)
                 .Select(w => new { w.Date, w.Weight });
 
@@ -49,12 +49,12 @@ namespace TrackerHabiHamApi.Services
             };
         }
 
-        public async Task<IReadOnlyList<WeightPointDto>> GetSeriesAsync(DateTime? start, DateTime? end)
+        public async Task<IReadOnlyList<WeightPointDto>> GetSeriesAsync(DateOnly? start, DateOnly? end)
         {
             var (from, to) = NormalizeRange(start, end);
 
             var list = await _context.MounthWeights
-                .Where(w => w.Date.Date >= from && w.Date.Date <= to)
+                .Where(w => w.Date >= from && w.Date <= to)
                 .OrderBy(w => w.Date)
                 .Select(w => new WeightPointDto
                 {
@@ -66,11 +66,11 @@ namespace TrackerHabiHamApi.Services
             return list;
         }
 
-        private static (DateTime from, DateTime to) NormalizeRange(DateTime? start, DateTime? end)
+        private static (DateOnly from, DateOnly to) NormalizeRange(DateOnly? start, DateOnly? end)
         {
-            var today = DateTime.UtcNow.Date;
-            var from = (start ?? new DateTime(today.Year, 1, 1)).Date;
-            var to = (end ?? today).Date;
+            var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+            var from = (start ?? DateOnly.FromDateTime(new DateTime(today.Year, 1, 1)));
+            var to = (end ?? today);
 
             if (to < from)
             {

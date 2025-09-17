@@ -89,7 +89,7 @@ namespace TrackerHabiHamApi.Controllers
                     }
 
                     var response = _googleSheetsService.WriteNumberToTodayRow(messageText);
-                    await _weightService.UpdateWeightAsync(DateTime.UtcNow, messageText);
+                    await _weightService.UpdateWeightAsync(DateOnly.FromDateTime(DateTime.UtcNow), messageText);
                     var responseText = GetResponse(response);
 
                     await _telegramService.SendMessageAsync(chatId, responseText);

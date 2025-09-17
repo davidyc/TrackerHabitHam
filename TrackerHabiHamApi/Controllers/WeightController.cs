@@ -16,7 +16,7 @@ namespace TrackerHabiHamApi.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<MounthWeight>>> GetFromPeriod(DateTime? start, DateTime? end)
+        public async Task<ActionResult<IEnumerable<MounthWeight>>> GetFromPeriod(DateOnly? start, DateOnly? end)
         {
             var weights = await _weightService.GetFromPeriod(start, end);
             return Ok(weights);
@@ -31,7 +31,7 @@ namespace TrackerHabiHamApi.Controllers
                     return BadRequest("Weight data is required.");
 
                 if (weight.Date == default)
-                    weight.Date = DateTime.UtcNow;
+                    weight.Date = DateOnly.FromDateTime(DateTime.Now);
 
                 var result = await _weightService.UpdateWeightAsync(weight.Date, weight.Weight);
 

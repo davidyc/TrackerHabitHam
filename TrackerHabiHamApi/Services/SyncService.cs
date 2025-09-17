@@ -20,12 +20,12 @@ namespace TrackerHabiHamApi.Services
 			var allGoogle = GetYearFromGoogle(year).ToList();
             var allDb = (await GetYearFromDB(year)).ToList();
 
-            var dbByDate = allDb.ToDictionary(x => x.Date.Date, x => x);
+            var dbByDate = allDb.ToDictionary(x => x.Date, x => x);
             var notSynced = new List<MounthWeight>(allGoogle.Count);
 
             foreach (var g in allGoogle)
             {
-                if (!dbByDate.TryGetValue(g.Date.Date, out var dbItem))
+                if (!dbByDate.TryGetValue(g.Date, out var dbItem))
                 {
                     notSynced.Add(g);
                     continue;
@@ -57,40 +57,40 @@ namespace TrackerHabiHamApi.Services
                 }
             }
 
-            var today = DateTime.Today;
-            all.RemoveAll(w => w.Date.Date > today);
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            all.RemoveAll(w => w.Date > today);
 			return all;
         }
 
         private async Task<IEnumerable<MounthWeight>> GetYearFromDB(int year)
 		{
-            var today = DateTime.Today;
+            var today = DateOnly.FromDateTime(DateTime.Today);
             var allDb = new List<MounthWeight>(366);
-            var start = new DateTime(year, 1, 1);
-            var end = new DateTime(year, 12, 31);
+            var start = DateOnly.FromDateTime(new DateTime(year, 1, 1));
+            var end = DateOnly.FromDateTime(new DateTime(year, 12, 31));
 
             try
             {                                 
                 var dbItemsTask = await _weightService.GetFromPeriod(start, end);
                 var dbItems = dbItemsTask
-                    .Where(w => w.Date.Date <= today && w.Date.Year == year)
+                    .Where(w => w.Date <= today && w.Date.Year == year)
                     .ToList();
 
-                var byDate = allDb.ToDictionary(x => x.Date.Date, x => x);
+                var byDate = allDb.ToDictionary(x => x.Date, x => x);
                 foreach (var dbItem in dbItems)
                 {
-                    if (byDate.TryGetValue(dbItem.Date.Date, out var existing))
+                    if (byDate.TryGetValue(dbItem.Date, out var existing))
                     {
                         existing.Weight = dbItem.Weight;
                     }
                     else
                     {
-                        allDb.Add(new MounthWeight { Date = dbItem.Date.Date, Weight = dbItem.Weight });
+                        allDb.Add(new MounthWeight { Date = dbItem.Date, Weight = dbItem.Weight });
                     }
                 }
 
                 allDb = allDb
-                    .Where(x => x.Date.Date <= today && x.Date.Year == year)
+                    .Where(x => x.Date <= today && x.Date.Year == year)
                     .OrderBy(x => x.Date)
                     .ToList();
             }
