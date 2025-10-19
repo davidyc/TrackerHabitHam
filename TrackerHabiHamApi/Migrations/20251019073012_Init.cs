@@ -16,7 +16,7 @@ namespace TrackerHabiHamApi.Migrations
                 columns: table => new
                 {
                     Date = table.Column<DateOnly>(type: "date", nullable: false),
-                    Weight = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
+                    Weight = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
                 },
                 constraints: table =>
                 {

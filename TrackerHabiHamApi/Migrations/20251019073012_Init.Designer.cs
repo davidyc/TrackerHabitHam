@@ -2,9 +2,9 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TrackerHabiHamApi.Data;
 
 #nullable disable
@@ -12,7 +12,7 @@ using TrackerHabiHamApi.Data;
 namespace TrackerHabiHamApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250917154705_Init")]
+    [Migration("20251019073012_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -21,9 +21,9 @@ namespace TrackerHabiHamApi.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "9.0.9")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+                .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("TrackerHabiHamApi.Models.Dto.MounthWeight", b =>
                 {
@@ -33,7 +33,7 @@ namespace TrackerHabiHamApi.Migrations
                     b.Property<string>("Weight")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Date");
 
