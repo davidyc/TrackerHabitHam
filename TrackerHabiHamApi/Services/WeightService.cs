@@ -37,36 +37,32 @@ namespace TrackerHabiHamApi.Services
 
         public async Task<MounthWeight?> UpdateWeightAsync(DateOnly date, string weight)
         {
-            var existingWeight = await _context.MounthWeights
-                .FirstOrDefaultAsync(w => w.Date == date);
+            MounthWeight? weightRecord;
 
-            if (existingWeight == null)
+            try
             {
-                var weightRecord = new MounthWeight
-                {
-                    Date = date,
-                    Weight = weight
-                };
+                weightRecord = await _context.MounthWeights.FirstOrDefaultAsync(w => w.Date == date);
 
-                try
+                if (weightRecord != null)
                 {
+                    weightRecord.Weight = weight;
+
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    weightRecord = new MounthWeight { Date = date, Weight = weight }; 
                     _context.MounthWeights.Add(weightRecord);
                     await _context.SaveChangesAsync();
-
                 }
-                catch (DbUpdateException)
-                {
-                    return null;
-                }
-
-                _googleSheetsService.WriteNumberToTodayRow(weight);
-                return weightRecord;
             }
-              
-            existingWeight.Weight = weight;
-            await _context.SaveChangesAsync();
+            catch (Exception ex)
+            {
+                weightRecord = new MounthWeight { Date = date, Weight = weight };
+            }
+
             _googleSheetsService.WriteNumberToTodayRow(weight);
-            return existingWeight;
+            return weightRecord;
         }
 
         public async Task<int> UpsertManyAsync(IEnumerable<MounthWeight> items)
