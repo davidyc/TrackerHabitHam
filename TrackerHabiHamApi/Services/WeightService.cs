@@ -48,8 +48,17 @@ namespace TrackerHabiHamApi.Services
                     Weight = weight
                 };
 
-                _context.MounthWeights.Add(weightRecord);
-                await _context.SaveChangesAsync();
+                try
+                {
+                    _context.MounthWeights.Add(weightRecord);
+                    await _context.SaveChangesAsync();
+
+                }
+                catch (DbUpdateException)
+                {
+                    return null;
+                }
+
                 _googleSheetsService.WriteNumberToTodayRow(weight);
                 return weightRecord;
             }
