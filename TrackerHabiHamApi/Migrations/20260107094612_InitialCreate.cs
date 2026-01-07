@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TrackerHabiHamApi.Migrations
 {
     /// <inheritdoc />
-    public partial class Init : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,8 +15,8 @@ namespace TrackerHabiHamApi.Migrations
                 name: "MounthWeights",
                 columns: table => new
                 {
-                    Date = table.Column<DateOnly>(type: "date", nullable: false),
-                    Weight = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
+                    Date = table.Column<DateOnly>(type: "TEXT", nullable: false),
+                    Weight = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false)
                 },
                 constraints: table =>
                 {
