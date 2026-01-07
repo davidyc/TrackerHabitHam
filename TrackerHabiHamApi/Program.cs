@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using MongoDB.Driver;
 using Scalar.AspNetCore;
 using TrackerHabiHamApi.Data;
 using TrackerHabiHamApi.Services;
@@ -25,11 +26,23 @@ builder.Services.AddHttpClient();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Add MongoDB
+var mongoConnectionString = builder.Configuration["Mongo:ConnectionString"] ?? "mongodb://localhost:27017";
+var mongoDatabaseName = builder.Configuration["Mongo:Database"] ?? "TrackerHabiHam";
+
+builder.Services.AddSingleton<IMongoClient>(sp => new MongoClient(mongoConnectionString));
+builder.Services.AddScoped<IMongoDatabase>(sp =>
+{
+    var client = sp.GetRequiredService<IMongoClient>();
+    return client.GetDatabase(mongoDatabaseName);
+});
+
 builder.Services.AddScoped<ITelegramService, TelegramService>();
 builder.Services.AddScoped<IGoogleSheetsService, GoogleSheetsService>();
 builder.Services.AddScoped<IWeightService, WeightService>();
 builder.Services.AddScoped<ISyncService, SyncService>();
 builder.Services.AddScoped<IWeightAnalysisService, WeightAnalysisService>();
+builder.Services.AddScoped<IJsonStoreService, JsonStoreService>();
 
 var app = builder.Build();
 
