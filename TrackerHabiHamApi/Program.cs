@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using TrackerHabiHamApi.Data;
 using TrackerHabiHamApi.Services;
@@ -8,6 +9,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Tracker HabiHam API",
+        Version = "v1"
+    });
+});
 builder.Services.AddOpenApi();
 builder.Services.AddHttpClient();
 
@@ -39,6 +49,11 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Tracker HabiHam API v1");
+});
 app.UseRouting();
 app.MapControllers();
 app.MapOpenApi();
