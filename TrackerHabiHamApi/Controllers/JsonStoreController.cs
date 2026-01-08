@@ -24,10 +24,7 @@ namespace TrackerHabiHamApi.Controllers
             {
                 // Read raw JSON from request body
                 using var reader = new StreamReader(Request.Body);
-                var jsonString = await reader.ReadToEndAsync(ct);
-                var obj = new { DateTime = DateTime.Now };
-                jsonString = JsonSerializer.Serialize(obj);
-
+                var jsonString = await reader.ReadToEndAsync(ct);           
 
                 if (string.IsNullOrWhiteSpace(jsonString))
                 {

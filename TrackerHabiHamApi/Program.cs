@@ -44,6 +44,17 @@ builder.Services.AddScoped<ISyncService, SyncService>();
 builder.Services.AddScoped<IWeightAnalysisService, WeightAnalysisService>();
 builder.Services.AddScoped<IJsonStoreService, JsonStoreService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DevOpen", policy =>
+    {
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
 // Auto migrate database on startup
@@ -71,5 +82,6 @@ app.UseRouting();
 app.MapControllers();
 app.MapOpenApi();
 app.MapScalarApiReference();
+app.UseCors("DevOpen");
 
 app.Run();
