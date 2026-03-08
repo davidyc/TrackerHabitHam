@@ -3,12 +3,12 @@
 
 $composeFile = Join-Path (Split-Path $PSScriptRoot -Parent) "docker-compose.postgres.yml"
 
-Write-Host "Starting PostgreSQL (TrackerHabiHamWorkouts)..." -ForegroundColor Cyan
+Write-Host "Starting PostgreSQL (TrackerHabiHam)..." -ForegroundColor Cyan
 docker compose -f $composeFile up -d
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "PostgreSQL is running on localhost:5432" -ForegroundColor Green
-    Write-Host "  - Database: TrackerHabiHamWorkouts"
+    Write-Host "  - Database: TrackerHabiHam"
     Write-Host "  - Username: postgres"
     Write-Host "  - Password: postgres"
     Write-Host ""

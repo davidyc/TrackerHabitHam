@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
+using Npgsql;
 using Scalar.AspNetCore;
 using TrackerHabiHamApi.Data;
 using TrackerHabiHamApi.Services;
@@ -26,8 +27,11 @@ builder.Services.AddHttpClient();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+var workoutConnection = builder.Configuration.GetConnectionString("WorkoutConnection")
+    ?? "Host=localhost;Port=5432;Database=TrackerHabiHam;Username=postgres;Password=postgres";
+EnsurePostgresDatabaseExists(workoutConnection);
 builder.Services.AddDbContext<WorkoutDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("WorkoutConnection")));
+    options.UseNpgsql(workoutConnection));
 
 // Add MongoDB
 var mongoConnectionString = builder.Configuration["Mongo:ConnectionString"] ?? "mongodb://localhost:27017";
@@ -74,6 +78,17 @@ using (var scope = app.Services.CreateScope())
     {
         Console.WriteLine($"An error occurred while migrating the database: {ex.Message}");
     }
+
+    try
+    {
+        var workoutContext = scope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+        workoutContext.Database.EnsureCreated();
+        Console.WriteLine("Workout database ensured.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"An error occurred while ensuring workout database: {ex.Message}");
+    }
 }
 
 // Configure the HTTP request pipeline
@@ -89,3 +104,37 @@ app.MapScalarApiReference();
 app.UseCors("DevOpen");
 
 app.Run();
+
+static void EnsurePostgresDatabaseExists(string connectionString)
+{
+    try
+    {
+        var builder = new NpgsqlConnectionStringBuilder(connectionString);
+        var databaseName = builder.Database;
+        if (string.IsNullOrEmpty(databaseName))
+            return;
+
+        builder.Database = "postgres";
+        using var connection = new NpgsqlConnection(builder.ConnectionString);
+        connection.Open();
+
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = $"SELECT 1 FROM pg_database WHERE datname = @name";
+        cmd.Parameters.AddWithValue("name", databaseName);
+
+        if (cmd.ExecuteScalar() == null)
+        {
+            connection.Close();
+            using var createConn = new NpgsqlConnection(builder.ConnectionString);
+            createConn.Open();
+            using var createCmd = createConn.CreateCommand();
+            createCmd.CommandText = $"CREATE DATABASE \"{databaseName.Replace("\"", "\"\"")}\"";
+            createCmd.ExecuteNonQuery();
+            Console.WriteLine($"Created PostgreSQL database '{databaseName}'.");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Could not ensure workout database exists: {ex.Message}");
+    }
+}
