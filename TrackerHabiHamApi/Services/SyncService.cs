@@ -63,44 +63,24 @@ namespace TrackerHabiHamApi.Services
         }
 
         private async Task<IEnumerable<MounthWeight>> GetYearFromDB(int year)
-		{
+        {
             var today = DateOnly.FromDateTime(DateTime.Today);
-            var allDb = new List<MounthWeight>(366);
             var start = DateOnly.FromDateTime(new DateTime(year, 1, 1));
             var end = DateOnly.FromDateTime(new DateTime(year, 12, 31));
 
             try
-            {                                 
-                var dbItemsTask = await _weightService.GetFromPeriod(start, end);
-                var dbItems = dbItemsTask
+            {
+                var dbItems = await _weightService.GetFromPeriod(start, end);
+                return dbItems
                     .Where(w => w.Date <= today && w.Date.Year == year)
-                    .ToList();
-
-                var byDate = allDb.ToDictionary(x => x.Date, x => x);
-                foreach (var dbItem in dbItems)
-                {
-                    if (byDate.TryGetValue(dbItem.Date, out var existing))
-                    {
-                        existing.Weight = dbItem.Weight;
-                    }
-                    else
-                    {
-                        allDb.Add(new MounthWeight { Date = dbItem.Date, Weight = dbItem.Weight });
-                    }
-                }
-
-                allDb = allDb
-                    .Where(x => x.Date <= today && x.Date.Year == year)
-                    .OrderBy(x => x.Date)
+                    .OrderBy(w => w.Date)
                     .ToList();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error merging DB data for {Year}", year);
+                return Enumerable.Empty<MounthWeight>();
             }
-
-            return allDb.ToList();
-
         }
 
 	}
