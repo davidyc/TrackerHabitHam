@@ -26,6 +26,9 @@ builder.Services.AddHttpClient();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddDbContext<WorkoutDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("WorkoutConnection")));
+
 // Add MongoDB
 var mongoConnectionString = builder.Configuration["Mongo:ConnectionString"] ?? "mongodb://localhost:27017";
 var mongoDatabaseName = builder.Configuration["Mongo:Database"] ?? "TrackerHabiHam";
@@ -43,6 +46,7 @@ builder.Services.AddScoped<IWeightService, WeightService>();
 builder.Services.AddScoped<ISyncService, SyncService>();
 builder.Services.AddScoped<IWeightAnalysisService, WeightAnalysisService>();
 builder.Services.AddScoped<IJsonStoreService, JsonStoreService>();
+builder.Services.AddScoped<IWorkoutService, WorkoutService>();
 
 builder.Services.AddCors(options =>
 {
