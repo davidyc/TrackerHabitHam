@@ -51,6 +51,10 @@ builder.Services.AddScoped<ISyncService, SyncService>();
 builder.Services.AddScoped<IWeightAnalysisService, WeightAnalysisService>();
 builder.Services.AddScoped<IJsonStoreService, JsonStoreService>();
 builder.Services.AddScoped<IWorkoutService, WorkoutService>();
+builder.Services.AddScoped<IMuscleGroupService, MuscleGroupService>();
+builder.Services.AddScoped<IExerciseService, ExerciseService>();
+builder.Services.AddScoped<IWorkoutProgramService, WorkoutProgramService>();
+builder.Services.AddScoped<IWorkoutSessionService, WorkoutSessionService>();
 
 builder.Services.AddCors(options =>
 {
@@ -82,8 +86,9 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var workoutContext = scope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
-        workoutContext.Database.EnsureCreated();
-        Console.WriteLine("Workout database ensured.");
+        workoutContext.Database.Migrate();
+        await WorkoutDbContextSeeder.SeedMuscleGroupsAsync(workoutContext);
+        Console.WriteLine("Workout database migrated and seeded.");
     }
     catch (Exception ex)
     {
