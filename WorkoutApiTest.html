@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout API Test</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: #1a1a1a; color: #e0e0e0; }
+        h1 { color: #4A90E2; }
+        h2 { color: #50C878; margin-top: 30px; font-size: 1.1em; }
+        input, select, button, textarea { padding: 8px 12px; margin: 4px; border-radius: 6px; }
+        input, select, textarea { background: #2d2d2d; border: 1px solid #404040; color: #fff; }
+        button { background: #4A90E2; color: white; border: none; cursor: pointer; }
+        button:hover { background: #3a7bc8; }
+        button.danger { background: #c75050; }
+        button.danger:hover { background: #a04040; }
+        .api-bar { background: #2d2d2d; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        .api-bar label { margin-right: 10px; }
+        .api-bar input { flex: 1; min-width: 300px; }
+        .api-bar .status { margin-left: 10px; font-size: 0.9em; }
+        .status.ok { color: #50C878; }
+        .status.err { color: #FF6B6B; }
+        .section { background: #2d2d2d; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+        .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .row label { min-width: 100px; }
+        pre { background: #1e1e1e; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px; max-height: 400px; overflow-y: auto; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        .tabs { display: flex; gap: 0; background: #2d2d2d; border-radius: 10px 10px 0 0; overflow: hidden; padding: 0; }
+        .tabs button { padding: 12px 20px; background: #2d2d2d; color: #aaa; border: none; cursor: pointer; font-size: 14px; }
+        .tabs button:hover { background: #404040; color: #fff; }
+        .tabs button.active { background: #4A90E2; color: white; }
+        .tab-panel { display: none; padding: 20px; background: #2d2d2d; border: 1px solid #404040; border-top: none; border-radius: 0 0 10px 10px; }
+        .tab-panel.active { display: block; }
+        .list { margin-top: 15px; border: 1px solid #404040; border-radius: 8px; overflow: hidden; }
+        .list-item { display: flex; align-items: center; gap: 12px; padding: 10px 15px; background: #1e1e1e; border-bottom: 1px solid #404040; flex-wrap: wrap; }
+        .list-item:last-child { border-bottom: none; }
+        .list-item .list-main { flex: 1; min-width: 120px; }
+        .list-item .list-title { font-weight: bold; font-size: 0.95em; color: #4A90E2; }
+        .list-item .list-meta { font-size: 0.85em; color: #999; }
+        .list-item .list-desc { font-size: 0.85em; color: #aaa; }
+        .list-item .list-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .list-item .list-actions button { padding: 6px 12px; font-size: 12px; }
+        .icon-btn { padding: 6px 10px; min-width: 32px; font-size: 1em; }
+        .list-item.list-edit { flex-wrap: wrap; }
+        .list-item.list-edit input, .list-item.list-edit select { flex: 1; min-width: 120px; margin: 0; }
+        .list-msg { color: #888; font-style: italic; padding: 15px; }
+        .list-err { color: #FF6B6B; padding: 15px; }
+        .program-block { border-bottom: 1px solid #404040; }
+        .program-block:last-child { border-bottom: none; }
+        .list-item.prog-row .list-main { cursor: pointer; }
+        .list-item.prog-row .list-main:hover { color: #6aa8f0; }
+        .program-expand { margin-right: 6px; font-size: 0.8em; transition: transform 0.2s; }
+        .program-block.expanded .program-expand { transform: rotate(90deg); }
+        .program-exercises { display: none; padding: 8px 15px 8px 35px; background: #252525; border-top: 1px solid #353535; }
+        .program-block.expanded .program-exercises { display: block; }
+        .program-block.program-edit .program-exercises { display: block; }
+        .program-ex-item { padding: 4px 0; font-size: 0.9em; color: #aaa; display: flex; align-items: center; gap: 8px; }
+        .program-ex-item .ex-remove { margin-left: auto; }
+        .program-add-ex { display: flex; align-items: center; gap: 10px; padding: 8px 15px; background: #1a1a1a; border-top: 1px solid #353535; flex-wrap: wrap; }
+        .program-add-ex select, .program-add-ex input { padding: 6px 10px; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <h1>Workout API Test</h1>
+    <div class="api-bar">
+        <label>API Base URL:</label>
+        <input type="text" id="apiBase" value="https://localhost:59682" placeholder="https://localhost:59682">
+        <button onclick="checkConnection()">Проверить</button>
+        <span id="connStatus" class="status"></span>
+    </div>
+
+    <div class="tabs">
+        <button class="active" data-tab="exercises">Упражнения</button>
+        <button data-tab="programs">Программы</button>
+        <button data-tab="workouts">Тренировки</button>
+        <button data-tab="sets">Подходы</button>
+    </div>
+
+    <div id="tab-exercises" class="tab-panel active">
+    <h2>Упражнения</h2>
+    <div class="section">
+        <div class="row">
+            <label>Фильтр по группе:</label>
+            <select id="exMuscleGroupFilter" onchange="loadExercises()">
+                <option value="">— Все —</option>
+            </select>
+        </div>
+        <div id="exercises" class="list"></div>
+    </div>
+    </div>
+
+    <div id="tab-programs" class="tab-panel">
+    <h2>Программы</h2>
+    <div class="section">
+        <div id="programs" class="list"></div>
+    </div>
+    </div>
+
+    <div id="tab-workouts" class="tab-panel">
+    <h2>Тренировки</h2>
+    <div class="section">
+        <div class="row">
+            <label>ProgramId:</label><input type="number" id="woProgId" placeholder="опц." style="width:80px">
+            <label>From:</label><input type="date" id="woFrom">
+            <label>To:</label><input type="date" id="woTo">
+            <button onclick="loadWorkouts()">Загрузить</button>
+        </div>
+        <div class="row">
+            <label>ProgramId:</label><input type="number" id="woCreateProgId" style="width:60px" required>
+            <label>Date:</label><input type="date" id="woDate" required>
+            <label>Notes:</label><input id="woNotes" placeholder="Заметки">
+            <button onclick="createWorkout()">Создать тренировку</button>
+        </div>
+        <div id="workouts" class="list"></div>
+    </div>
+    </div>
+
+    <div id="tab-sets" class="tab-panel">
+    <h2>Подходы (Sets)</h2>
+    <div class="section">
+        <div class="row">
+            <label>WorkoutId:</label><input type="number" id="setWorkoutId" style="width:70px">
+            <label>ExerciseId:</label><input type="number" id="setExerciseId" style="width:70px">
+            <label>Order:</label><input type="number" id="setOrder" value="0" style="width:50px">
+            <label>Reps:</label><input type="number" id="setReps" placeholder="опц." style="width:60px">
+            <label>WeightKg:</label><input type="number" step="0.01" id="setWeight" placeholder="опц." style="width:70px">
+            <button onclick="addSet()">Добавить подход</button>
+        </div>
+        <pre id="setsInfo">Укажите WorkoutId и нажмите «Добавить подход»</pre>
+    </div>
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            loadMuscleGroups().then(() => loadExercises());
+        });
+
+        document.querySelectorAll('.tabs button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                const panel = document.getElementById('tab-' + btn.dataset.tab);
+                panel.classList.add('active');
+                if (btn.dataset.tab === 'exercises') loadExercises();
+                else if (btn.dataset.tab === 'programs') loadPrograms();
+                else if (btn.dataset.tab === 'workouts') loadWorkouts();
+            });
+        });
+        function escapeHtml(s) { return (s || '').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+        function api() { return document.getElementById('apiBase').value.replace(/\/$/, ''); }
+        function ok(res) { return res.ok; }
+        function json(res) { return res.json().catch(() => ({})); }
+        function setStatus(el, ok, msg) {
+            const s = document.getElementById(el || 'connStatus');
+            s.textContent = msg;
+            s.className = 'status ' + (ok ? 'ok' : 'err');
+        }
+
+        async function checkConnection() {
+            setStatus('connStatus', false, 'Проверка...');
+            try {
+                const r = await fetch(api() + '/api/Workout/check');
+                const j = await r.json();
+                setStatus('connStatus', j.connected, j.message || (r.ok ? 'OK' : 'Ошибка'));
+                if (j.connected) loadMuscleGroups();
+            } catch (e) {
+                setStatus('connStatus', false, e.message);
+            }
+        }
+
+        function fillMuscleGroupDropdowns(data) {
+            const opt = (sel) => {
+                const s = document.getElementById(sel);
+                if (!s) return;
+                const cur = s.value;
+                s.innerHTML = '<option value="">— Все —</option>';
+                (data || []).forEach(m => {
+                    const o = document.createElement('option');
+                    o.value = m.id;
+                    o.textContent = m.name;
+                    s.appendChild(o);
+                });
+                if (cur && [...s.options].some(o => o.value === cur)) s.value = cur;
+            };
+            opt('exMuscleGroupFilter');
+        }
+
+        let muscleGroupsData = [];
+        async function loadMuscleGroups() {
+            try {
+                const r = await fetch(api() + '/api/Workout/muscle-groups');
+                const data = await json(r);
+                muscleGroupsData = Array.isArray(data) ? data : [];
+                fillMuscleGroupDropdowns(muscleGroupsData);
+            } catch (e) { /* тихо при ошибке */ }
+        }
+
+        function muscleGroupOptions(selectedId) {
+            let opts = '<option value="">— Не выбрано —</option>';
+            muscleGroupsData.forEach(m => {
+                opts += `<option value="${m.id}" ${m.id == selectedId ? 'selected' : ''}>${escapeHtml(m.name)}</option>`;
+            });
+            return opts;
+        }
+
+        function renderCreateExerciseRow() {
+            return `<div class="list-item list-edit list-create" data-create="1">
+                <span class="list-title" style="min-width:140px">Добавить упражнение</span>
+                <input type="text" class="ex-create-name" placeholder="Название">
+                <input type="text" class="ex-create-desc" placeholder="Описание">
+                <select class="ex-create-mg">${muscleGroupOptions(null)}</select>
+                <div class="list-actions">
+                    <button class="ex-create-btn icon-btn" title="Добавить">➕</button>
+                </div>
+            </div>`;
+        }
+
+        async function loadExercises() {
+            const el = document.getElementById('exercises');
+            try {
+                const mg = document.getElementById('exMuscleGroupFilter').value;
+                const q = mg ? '?muscleGroupId=' + mg : '';
+                const r = await fetch(api() + '/api/Workout/exercises' + q);
+                const data = await json(r);
+                const list = Array.isArray(data) ? data : [];
+                el.innerHTML = renderCreateExerciseRow() + list.map(e => renderExerciseRow(e)).join('');
+                if (list.length === 0) el.innerHTML += '<span class="list-msg">Нет упражнений</span>';
+                bindExerciseCardEvents(el);
+                bindCreateExerciseEvent(el);
+            } catch (e) {
+                el.innerHTML = '<span class="list-err">Ошибка: ' + escapeHtml(e.message) + '</span>';
+            }
+        }
+
+        function bindCreateExerciseEvent(el) {
+            const btn = el.querySelector('.ex-create-btn');
+            if (!btn) return;
+            btn.addEventListener('click', () => {
+                const row = el.querySelector('.list-create');
+                const name = row.querySelector('.ex-create-name').value;
+                const desc = row.querySelector('.ex-create-desc').value;
+                const mgVal = row.querySelector('.ex-create-mg').value;
+                createExerciseFromCard({ name, description: desc || null, muscleGroupId: mgVal ? parseInt(mgVal) : null }, row);
+            });
+        }
+
+        async function createExerciseFromCard(data, cardEl) {
+            try {
+                const r = await fetch(api() + '/api/Workout/exercises', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (r.ok) {
+                    cardEl.querySelector('.ex-create-name').value = '';
+                    cardEl.querySelector('.ex-create-desc').value = '';
+                    cardEl.querySelector('.ex-create-mg').value = '';
+                    loadExercises();
+                } else {
+                    cardEl.insertAdjacentHTML('beforeend', '<span class="list-err">Ошибка ' + r.status + '</span>');
+                }
+            } catch (e) {
+                cardEl.insertAdjacentHTML('beforeend', '<span class="list-err">' + escapeHtml(e.message) + '</span>');
+            }
+        }
+
+        function renderExerciseRow(e, isEdit = false) {
+            if (isEdit) {
+                return `<div class="list-item list-edit" data-id="${e.id}">
+                    <input type="text" class="ex-edit-name" value="${escapeHtml(e.name).replace(/"/g, '&quot;')}" placeholder="Название">
+                    <input type="text" class="ex-edit-desc" value="${escapeHtml(e.description || '').replace(/"/g, '&quot;')}" placeholder="Описание">
+                    <select class="ex-edit-mg">${muscleGroupOptions(e.muscleGroupId)}</select>
+                    <div class="list-actions">
+                        <button class="ex-save" data-id="${e.id}">Сохранить</button>
+                        <button class="danger ex-cancel" data-id="${e.id}">Отмена</button>
+                    </div>
+                </div>`;
+            }
+            return `<div class="list-item" data-id="${e.id}">
+                <div class="list-main">
+                    <div class="list-title">${escapeHtml(e.name)}</div>
+                    <div class="list-meta">${e.muscleGroup ? escapeHtml(e.muscleGroup.name) : '—'}</div>
+                    ${e.description ? '<div class="list-desc">' + escapeHtml(e.description) + '</div>' : ''}
+                </div>
+                <div class="list-actions">
+                    <button class="ex-edit icon-btn" data-id="${e.id}" data-name="${escapeHtml(e.name).replace(/"/g, '&quot;')}" data-desc="${escapeHtml(e.description || '').replace(/"/g, '&quot;')}" data-mg="${e.muscleGroupId || ''}" title="Изменить">✏</button>
+                    <button class="danger ex-del icon-btn" data-id="${e.id}" title="Удалить">🗑</button>
+                </div>
+            </div>`;
+        }
+
+        function bindExerciseCardEvents(el) {
+            el.querySelectorAll('.ex-edit').forEach(btn => btn.addEventListener('click', function() {
+                const id = +this.dataset.id;
+                const row = this.closest('.list-item');
+                const e = { id, name: this.dataset.name, description: this.dataset.desc, muscleGroupId: this.dataset.mg || null };
+                row.outerHTML = renderExerciseRow(e, true);
+                const newRow = el.querySelector(`.list-edit[data-id="${id}"]`);
+                newRow.querySelector('.ex-save').addEventListener('click', () => saveExerciseInline(id, newRow));
+                newRow.querySelector('.ex-cancel').addEventListener('click', () => loadExercises());
+            }));
+            el.querySelectorAll('.ex-del').forEach(btn => btn.addEventListener('click', function() { deleteExercise(+this.dataset.id); }));
+        }
+
+        async function saveExerciseInline(id, cardEl) {
+            const name = cardEl.querySelector('.ex-edit-name').value;
+            const desc = cardEl.querySelector('.ex-edit-desc').value;
+            const mgVal = cardEl.querySelector('.ex-edit-mg').value;
+            const body = { name, description: desc || null, muscleGroupId: mgVal ? parseInt(mgVal) : null };
+            try {
+                const r = await fetch(api() + '/api/Workout/exercises/' + id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (r.ok) loadExercises(); else cardEl.insertAdjacentHTML('beforeend', '<span class="list-err">Ошибка ' + r.status + '</span>');
+            } catch (e) {
+                cardEl.insertAdjacentHTML('beforeend', '<span class="list-err">' + escapeHtml(e.message) + '</span>');
+            }
+        }
+
+        async function deleteExercise(id) {
+            if (!confirm('Удалить упражнение?')) return;
+            try {
+                const r = await fetch(api() + '/api/Workout/exercises/' + id, { method: 'DELETE' });
+                if (r.ok) loadExercises(); else document.getElementById('exercises').innerHTML = '<span class="list-err">Ошибка ' + r.status + '</span>';
+            } catch (e) {
+                document.getElementById('exercises').innerHTML = '<span class="list-err">Ошибка: ' + escapeHtml(e.message) + '</span>';
+            }
+        }
+
+        function renderCreateProgramRow() {
+            return `<div class="list-item list-edit list-create-prog" data-create="1">
+                <span class="list-title" style="min-width:140px">Добавить программу</span>
+                <input type="text" class="prog-create-name" placeholder="Название">
+                <input type="text" class="prog-create-desc" placeholder="Описание">
+                <div class="list-actions">
+                    <button class="prog-create-btn icon-btn" title="Добавить">➕</button>
+                </div>
+            </div>`;
+        }
+
+        function renderAddExToProgram(exercises, progId, nextOrder = 0) {
+            const exOpts = exercises.map(e => `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
+            return `<div class="program-add-ex" data-prog-id="${progId}">
+                <select class="add-ex-ex-id"><option value="">— Упражнение —</option>${exOpts}</select>
+                <input type="number" class="add-ex-order" value="${nextOrder}" placeholder="Порядок" style="width:70px">
+                <button class="add-ex-btn icon-btn" title="Добавить">➕</button>
+            </div>`;
+        }
+
+        function renderProgramExercisesList(exercises) {
+            if (!exercises || exercises.length === 0) return '<div class="program-ex-item">Нет упражнений</div>';
+            const sorted = [...exercises].sort((a, b) => (a.order || 0) - (b.order || 0));
+            return sorted.map(pe => {
+                const name = pe.exercise ? pe.exercise.name : '—';
+                return `<div class="program-ex-item">${pe.order || 0}. ${escapeHtml(name)}</div>`;
+            }).join('');
+        }
+
+        function renderProgramExercisesListEditable(exercises, progId) {
+            if (!exercises || exercises.length === 0) return '<div class="program-ex-item">Нет упражнений</div>';
+            const sorted = [...exercises].sort((a, b) => (a.order || 0) - (b.order || 0));
+            return sorted.map(pe => {
+                const name = pe.exercise ? pe.exercise.name : '—';
+                return `<div class="program-ex-item" data-pe-id="${pe.id}">
+                    ${pe.order || 0}. ${escapeHtml(name)}
+                    <button class="ex-remove danger icon-btn" data-prog-id="${progId}" data-pe-id="${pe.id}" title="Удалить из программы">🗑</button>
+                </div>`;
+            }).join('');
+        }
+
+        function renderProgramBlock(p, exercisesList, isEdit = false) {
+            const progRow = renderProgramRow(p, exercisesList, isEdit);
+            if (isEdit) {
+                const exListEdit = renderProgramExercisesListEditable(p.exercises, p.id);
+                const nextOrder = p.exercises ? p.exercises.length : 0;
+                const addExRow = renderAddExToProgram(exercisesList, p.id, nextOrder);
+                return `<div class="program-block program-edit" data-id="${p.id}">${progRow}
+                    <div class="program-exercises program-exercises-edit">${exListEdit}</div>
+                    ${addExRow}</div>`;
+            }
+            const exList = renderProgramExercisesList(p.exercises);
+            return `<div class="program-block" data-id="${p.id}">
+                ${progRow}
+                <div class="program-exercises">${exList}</div>
+            </div>`;
+        }
+
+        function renderProgramRow(p, exercisesList, isEdit = false) {
+            if (isEdit) {
+                return `<div class="list-item list-edit" data-id="${p.id}">
+                    <input type="text" class="prog-edit-name" value="${escapeHtml(p.name).replace(/"/g, '&quot;')}" placeholder="Название">
+                    <input type="text" class="prog-edit-desc" value="${escapeHtml(p.description || '').replace(/"/g, '&quot;')}" placeholder="Описание">
+                    <div class="list-actions">
+                        <button class="prog-save icon-btn" data-id="${p.id}" title="Сохранить">✓</button>
+                        <button class="danger prog-cancel icon-btn" data-id="${p.id}" title="Отмена">✕</button>
+                    </div>
+                </div>`;
+            }
+            const exCount = p.exercises ? p.exercises.length : 0;
+            return `<div class="list-item prog-row" data-id="${p.id}">
+                <span class="program-expand">▶</span>
+                <div class="list-main">
+                    <div class="list-title">${escapeHtml(p.name)}</div>
+                    <div class="list-meta">Упражнений: ${exCount}</div>
+                    ${p.description ? '<div class="list-desc">' + escapeHtml(p.description) + '</div>' : ''}
+                </div>
+                <div class="list-actions">
+                    <button class="prog-edit icon-btn" data-id="${p.id}" data-name="${escapeHtml(p.name).replace(/"/g, '&quot;')}" data-desc="${escapeHtml(p.description || '').replace(/"/g, '&quot;')}" title="Изменить">✏</button>
+                    <button class="danger prog-del icon-btn" data-id="${p.id}" title="Удалить">🗑</button>
+                </div>
+            </div>`;
+        }
+
+        let programsList = [], exercisesList = [];
+        async function loadPrograms() {
+            const el = document.getElementById('programs');
+            try {
+                const [progData, exData] = await Promise.all([
+                    fetch(api() + '/api/Workout/programs').then(r => json(r)),
+                    fetch(api() + '/api/Workout/exercises').then(r => json(r))
+                ]);
+                programsList = Array.isArray(progData) ? progData : [];
+                exercisesList = Array.isArray(exData) ? exData : [];
+                el.innerHTML = renderCreateProgramRow() +
+                    programsList.map(p => renderProgramBlock(p, exercisesList)).join('');
+                if (programsList.length === 0) el.innerHTML += '<span class="list-msg">Нет программ</span>';
+                bindProgramEvents(el);
+            } catch (e) {
+                el.innerHTML = '<span class="list-err">Ошибка: ' + escapeHtml(e.message) + '</span>';
+            }
+        }
+
+        function bindProgramEvents(el) {
+            const createBtn = el.querySelector('.prog-create-btn');
+            if (createBtn) createBtn.addEventListener('click', () => {
+                const row = el.querySelector('.list-create-prog');
+                const name = row.querySelector('.prog-create-name').value;
+                const desc = row.querySelector('.prog-create-desc').value;
+                createProgramFromRow({ name, description: desc || null }, row);
+            });
+            el.querySelectorAll('.prog-edit').forEach(btn => btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const id = +this.dataset.id;
+                const block = this.closest('.program-block');
+                const p = programsList.find(x => x.id === id) || { id, name: this.dataset.name, description: this.dataset.desc || '' };
+                block.outerHTML = renderProgramBlock(p, exercisesList, true);
+                const newBlock = el.querySelector(`.program-edit[data-id="${id}"]`);
+                const newRow = newBlock.querySelector('.list-edit');
+                newBlock.querySelector('.prog-save').addEventListener('click', () => saveProgramInline(id, newRow));
+                newBlock.querySelector('.prog-cancel').addEventListener('click', () => loadPrograms());
+                newBlock.querySelectorAll('.add-ex-btn').forEach(b => b.addEventListener('click', function() {
+                    const addExRow = this.closest('.program-add-ex');
+                    const exId = addExRow.querySelector('.add-ex-ex-id').value;
+                    const order = addExRow.querySelector('.add-ex-order').value || 0;
+                    if (!exId) return;
+                    addExerciseToProgramFromRow(id, parseInt(exId), parseInt(order), addExRow);
+                }));
+                newBlock.querySelectorAll('.ex-remove').forEach(b => b.addEventListener('click', function() {
+                    const progId = parseInt(this.dataset.progId);
+                    const peId = parseInt(this.dataset.peId);
+                    removeExerciseFromProgram(progId, peId, newBlock);
+                }));
+            }));
+            el.querySelectorAll('.prog-del').forEach(btn => btn.addEventListener('click', function(e) { e.stopPropagation(); deleteProgram(+this.dataset.id); }));
+            el.querySelectorAll('.prog-row').forEach(row => row.addEventListener('click', function(e) {
+                if (e.target.closest('.list-actions')) return;
+                this.closest('.program-block').classList.toggle('expanded');
+            }));
+        }
+
+        async function createProgramFromRow(data, rowEl) {
+            try {
+                const r = await fetch(api() + '/api/Workout/programs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (r.ok) {
+                    rowEl.querySelector('.prog-create-name').value = '';
+                    rowEl.querySelector('.prog-create-desc').value = '';
+                    loadPrograms();
+                } else rowEl.insertAdjacentHTML('beforeend', '<span class="list-err">Ошибка ' + r.status + '</span>');
+            } catch (e) {
+                rowEl.insertAdjacentHTML('beforeend', '<span class="list-err">' + escapeHtml(e.message) + '</span>');
+            }
+        }
+
+        async function removeExerciseFromProgram(progId, peId, blockEl) {
+            try {
+                const r = await fetch(api() + '/api/Workout/programs/' + progId + '/exercises/' + peId, { method: 'DELETE' });
+                if (r.ok) {
+                    const row = blockEl.querySelector(`.program-ex-item[data-pe-id="${peId}"]`);
+                    if (row) row.remove();
+                    const exListEl = blockEl.querySelector('.program-exercises-edit');
+                    if (exListEl && !exListEl.querySelector('.program-ex-item')) {
+                        exListEl.innerHTML = '<div class="program-ex-item">Нет упражнений</div>';
+                    }
+                    const addExRow = blockEl.querySelector('.program-add-ex');
+                    if (addExRow) addExRow.querySelector('.add-ex-order').value = blockEl.querySelectorAll('.program-ex-item').length;
+                } else blockEl.insertAdjacentHTML('beforeend', '<span class="list-err">Ошибка ' + r.status + '</span>');
+            } catch (e) {
+                blockEl.insertAdjacentHTML('beforeend', '<span class="list-err">' + escapeHtml(e.message) + '</span>');
+            }
+        }
+
+        async function addExerciseToProgramFromRow(progId, exId, order, addExRow) {
+            try {
+                const r = await fetch(api() + '/api/Workout/programs/' + progId + '/exercises?exerciseId=' + exId + '&order=' + order, { method: 'POST' });
+                const data = await json(r);
+                if (r.ok) {
+                    const ex = exercisesList.find(e => e.id === exId);
+                    const name = ex ? ex.name : '—';
+                    const peId = data && data.id ? data.id : 0;
+                    const exListEl = addExRow.closest('.program-block').querySelector('.program-exercises-edit');
+                    const placeholder = exListEl.querySelector('.program-ex-item');
+                    if (placeholder && placeholder.textContent.trim().includes('Нет упражнений')) exListEl.innerHTML = '';
+                    const newRow = document.createElement('div');
+                    newRow.className = 'program-ex-item';
+                    newRow.dataset.peId = peId;
+                    newRow.innerHTML = `${order}. ${escapeHtml(name)}<button class="ex-remove danger icon-btn" data-prog-id="${progId}" data-pe-id="${peId}" title="Удалить из программы">🗑</button>`;
+                    newRow.querySelector('.ex-remove').addEventListener('click', function() {
+                        removeExerciseFromProgram(progId, peId, addExRow.closest('.program-block'));
+                    });
+                    exListEl.appendChild(newRow);
+                    addExRow.querySelector('.add-ex-ex-id').value = '';
+                    const nextOrder = exListEl.querySelectorAll('.program-ex-item').length;
+                    addExRow.querySelector('.add-ex-order').value = nextOrder;
+                } else addExRow.insertAdjacentHTML('beforeend', '<span class="list-err">Ошибка ' + r.status + '</span>');
+            } catch (e) {
+                addExRow.insertAdjacentHTML('beforeend', '<span class="list-err">' + escapeHtml(e.message) + '</span>');
+            }
+        }
+
+        async function saveProgramInline(id, rowEl) {
+            const name = rowEl.querySelector('.prog-edit-name').value;
+            const desc = rowEl.querySelector('.prog-edit-desc').value;
+            try {
+                const r = await fetch(api() + '/api/Workout/programs/' + id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, description: desc || null })
+                });
+                if (r.ok) loadPrograms(); else rowEl.insertAdjacentHTML('beforeend', '<span class="list-err">Ошибка ' + r.status + '</span>');
+            } catch (e) {
+                rowEl.insertAdjacentHTML('beforeend', '<span class="list-err">' + escapeHtml(e.message) + '</span>');
+            }
+        }
+
+        async function deleteProgram(id) {
+            if (!confirm('Удалить программу?')) return;
+            try {
+                const r = await fetch(api() + '/api/Workout/programs/' + id, { method: 'DELETE' });
+                if (r.ok) loadPrograms(); else document.getElementById('programs').innerHTML = '<span class="list-err">Ошибка ' + r.status + '</span>';
+            } catch (e) {
+                document.getElementById('programs').innerHTML = '<span class="list-err">Ошибка: ' + escapeHtml(e.message) + '</span>';
+            }
+        }
+
+        async function loadWorkouts() {
+            const el = document.getElementById('workouts');
+            try {
+                let q = [];
+                const progId = document.getElementById('woProgId').value;
+                const from = document.getElementById('woFrom').value;
+                const to = document.getElementById('woTo').value;
+                if (progId) q.push('programId=' + progId);
+                if (from) q.push('from=' + from);
+                if (to) q.push('to=' + to);
+                const r = await fetch(api() + '/api/Workout/workouts' + (q.length ? '?' + q.join('&') : ''));
+                const data = await json(r);
+                const list = Array.isArray(data) ? data : [];
+                el.innerHTML = list.map(w => {
+                    const progName = w.workoutProgram ? w.workoutProgram.name : '—';
+                    const setsCount = w.sets ? w.sets.length : 0;
+                    return `<div class="list-item">
+                        <div class="list-main">
+                            <div class="list-title">${escapeHtml(w.date)}</div>
+                            <div class="list-meta">${escapeHtml(progName)} · подходов: ${setsCount}</div>
+                            ${w.notes ? '<div class="list-desc">' + escapeHtml(w.notes) + '</div>' : ''}
+                        </div>
+                    </div>`;
+                }).join('') || '<span class="list-msg">Нет данных</span>';
+            } catch (e) {
+                el.innerHTML = '<span class="list-err">Ошибка: ' + escapeHtml(e.message) + '</span>';
+            }
+        }
+
+        async function createWorkout() {
+            const progId = document.getElementById('woCreateProgId').value;
+            const date = document.getElementById('woDate').value;
+            const notes = document.getElementById('woNotes').value;
+            const body = { workoutProgramId: parseInt(progId), date: date, notes: notes || null };
+            try {
+                const r = await fetch(api() + '/api/Workout/workouts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (r.ok) loadWorkouts(); else document.getElementById('workouts').innerHTML = '<span class="list-err">Ошибка ' + r.status + '</span>';
+            } catch (e) {
+                document.getElementById('workouts').innerHTML = '<span class="list-err">Ошибка: ' + escapeHtml(e.message) + '</span>';
+            }
+        }
+
+        async function addSet() {
+            const workoutId = document.getElementById('setWorkoutId').value;
+            const exerciseId = document.getElementById('setExerciseId').value;
+            const order = document.getElementById('setOrder').value || 0;
+            const reps = document.getElementById('setReps').value;
+            const weight = document.getElementById('setWeight').value;
+            const body = {
+                exerciseId: parseInt(exerciseId),
+                order: parseInt(order),
+                reps: reps ? parseInt(reps) : null,
+                weightKg: weight ? parseFloat(weight) : null
+            };
+            try {
+                const r = await fetch(api() + '/api/Workout/workouts/' + workoutId + '/sets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await json(r);
+                document.getElementById('setsInfo').textContent = r.ok ? 'Добавлено: ' + JSON.stringify(data, null, 2) : 'Ошибка ' + r.status + ': ' + JSON.stringify(data);
+            } catch (e) {
+                document.getElementById('setsInfo').textContent = 'Ошибка: ' + e.message;
+            }
+        }
+    </script>
+</body>
+</html>
