@@ -52,11 +52,17 @@
         .list-item.prog-row .list-main:hover { color: #6aa8f0; }
         .program-expand { margin-right: 6px; font-size: 0.8em; transition: transform 0.2s; }
         .program-block.expanded .program-expand { transform: rotate(90deg); }
-        .program-exercises { display: none; padding: 8px 15px 8px 35px; background: #252525; border-top: 1px solid #353535; }
+        .program-exercises { display: none; padding: 8px 15px 8px 35px; background: #252525; border-top: 1px solid #353535; overflow-x: auto; }
         .program-block.expanded .program-exercises { display: block; }
         .program-block.program-edit .program-exercises { display: block; }
-        .program-ex-item { padding: 4px 0; font-size: 0.9em; color: #aaa; display: flex; align-items: center; gap: 8px; }
-        .program-ex-item .ex-remove { margin-left: auto; }
+        .program-ex-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        .program-ex-table th, .program-ex-table td { padding: 6px 10px; text-align: left; border-bottom: 1px solid #353535; }
+        .program-ex-table th { color: #888; font-weight: 500; }
+        .program-ex-table td { color: #aaa; }
+        .program-ex-item .ex-remove { margin-left: 8px; }
+        .program-ex-comment { color: #888; font-size: 0.9em; }
+        .program-ex-mg { color: #6a9; font-size: 0.9em; }
+        .program-ex-empty { color: #888; font-style: italic; }
         .program-add-ex { display: flex; align-items: center; gap: 10px; padding: 8px 15px; background: #1a1a1a; border-top: 1px solid #353535; flex-wrap: wrap; }
         .program-add-ex select, .program-add-ex input { padding: 6px 10px; font-size: 13px; }
     </style>
@@ -342,42 +348,49 @@
             </div>`;
         }
 
-        function renderAddExToProgram(exercises, progId, nextOrder = 0) {
+        function renderAddExToProgram(exercises, progId) {
             const exOpts = exercises.map(e => `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
             return `<div class="program-add-ex" data-prog-id="${progId}">
                 <select class="add-ex-ex-id"><option value="">— Упражнение —</option>${exOpts}</select>
-                <input type="number" class="add-ex-order" value="${nextOrder}" placeholder="Порядок" style="width:70px">
+                <input type="text" class="add-ex-comment" placeholder="Комментарий" style="flex:1;min-width:120px">
                 <button class="add-ex-btn icon-btn" title="Добавить">➕</button>
             </div>`;
         }
 
         function renderProgramExercisesList(exercises) {
-            if (!exercises || exercises.length === 0) return '<div class="program-ex-item">Нет упражнений</div>';
+            if (!exercises || exercises.length === 0) return '<p class="program-ex-empty">Нет упражнений</p>';
             const sorted = [...exercises].sort((a, b) => (a.order || 0) - (b.order || 0));
-            return sorted.map(pe => {
+            const rows = sorted.map(pe => {
                 const name = pe.exercise ? pe.exercise.name : '—';
-                return `<div class="program-ex-item">${pe.order || 0}. ${escapeHtml(name)}</div>`;
+                const mgName = pe.exercise?.muscleGroup?.name || '—';
+                const comment = pe.comment ? escapeHtml(pe.comment) : '—';
+                return `<tr><td>${escapeHtml(name)}</td><td><span class="program-ex-mg">${escapeHtml(mgName)}</span></td><td><span class="program-ex-comment">${comment}</span></td></tr>`;
             }).join('');
+            return `<table class="program-ex-table"><thead><tr><th>Упражнение</th><th>Группа мышц</th><th>Комментарий</th></tr></thead><tbody>${rows}</tbody></table>`;
         }
 
         function renderProgramExercisesListEditable(exercises, progId) {
-            if (!exercises || exercises.length === 0) return '<div class="program-ex-item">Нет упражнений</div>';
+            if (!exercises || exercises.length === 0) return '<table class="program-ex-table"><thead><tr><th>Упражнение</th><th>Группа мышц</th><th>Комментарий</th><th></th></tr></thead><tbody><tr><td colspan="4" class="program-ex-empty">Нет упражнений</td></tr></tbody></table>';
             const sorted = [...exercises].sort((a, b) => (a.order || 0) - (b.order || 0));
-            return sorted.map(pe => {
+            const rows = sorted.map(pe => {
                 const name = pe.exercise ? pe.exercise.name : '—';
-                return `<div class="program-ex-item" data-pe-id="${pe.id}">
-                    ${pe.order || 0}. ${escapeHtml(name)}
-                    <button class="ex-remove danger icon-btn" data-prog-id="${progId}" data-pe-id="${pe.id}" title="Удалить из программы">🗑</button>
-                </div>`;
+                const mgName2 = pe.exercise?.muscleGroup?.name || '—';
+                const comment = pe.comment ? escapeHtml(pe.comment) : '—';
+                return `<tr class="program-ex-item" data-pe-id="${pe.id}">
+                    <td>${escapeHtml(name)}</td>
+                    <td><span class="program-ex-mg">${escapeHtml(mgName2)}</span></td>
+                    <td><span class="program-ex-comment">${comment}</span></td>
+                    <td><button class="ex-remove danger icon-btn" data-prog-id="${progId}" data-pe-id="${pe.id}" title="Удалить">🗑</button></td>
+                </tr>`;
             }).join('');
+            return `<table class="program-ex-table"><thead><tr><th>Упражнение</th><th>Группа мышц</th><th>Комментарий</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
         }
 
         function renderProgramBlock(p, exercisesList, isEdit = false) {
             const progRow = renderProgramRow(p, exercisesList, isEdit);
             if (isEdit) {
                 const exListEdit = renderProgramExercisesListEditable(p.exercises, p.id);
-                const nextOrder = p.exercises ? p.exercises.length : 0;
-                const addExRow = renderAddExToProgram(exercisesList, p.id, nextOrder);
+                const addExRow = renderAddExToProgram(exercisesList, p.id);
                 return `<div class="program-block program-edit" data-id="${p.id}">${progRow}
                     <div class="program-exercises program-exercises-edit">${exListEdit}</div>
                     ${addExRow}</div>`;
@@ -454,10 +467,12 @@
                 newBlock.querySelector('.prog-cancel').addEventListener('click', () => loadPrograms());
                 newBlock.querySelectorAll('.add-ex-btn').forEach(b => b.addEventListener('click', function() {
                     const addExRow = this.closest('.program-add-ex');
+                    const block = addExRow.closest('.program-block');
                     const exId = addExRow.querySelector('.add-ex-ex-id').value;
-                    const order = addExRow.querySelector('.add-ex-order').value || 0;
+                    const order = (block.querySelectorAll('.program-ex-item[data-pe-id]').length || 0) + 1;
+                    const comment = addExRow.querySelector('.add-ex-comment')?.value?.trim() || null;
                     if (!exId) return;
-                    addExerciseToProgramFromRow(id, parseInt(exId), parseInt(order), addExRow);
+                    addExerciseToProgramFromRow(id, parseInt(exId), order, comment, addExRow);
                 }));
                 newBlock.querySelectorAll('.ex-remove').forEach(b => b.addEventListener('click', function() {
                     const progId = parseInt(this.dataset.progId);
@@ -495,40 +510,44 @@
                 if (r.ok) {
                     const row = blockEl.querySelector(`.program-ex-item[data-pe-id="${peId}"]`);
                     if (row) row.remove();
-                    const exListEl = blockEl.querySelector('.program-exercises-edit');
-                    if (exListEl && !exListEl.querySelector('.program-ex-item')) {
-                        exListEl.innerHTML = '<div class="program-ex-item">Нет упражнений</div>';
+                    const tbody = blockEl.querySelector('.program-exercises-edit tbody');
+                    if (tbody && !tbody.querySelector('.program-ex-item')) {
+                        tbody.innerHTML = '<tr><td colspan="4" class="program-ex-empty">Нет упражнений</td></tr>';
                     }
-                    const addExRow = blockEl.querySelector('.program-add-ex');
-                    if (addExRow) addExRow.querySelector('.add-ex-order').value = blockEl.querySelectorAll('.program-ex-item').length;
                 } else blockEl.insertAdjacentHTML('beforeend', '<span class="list-err">Ошибка ' + r.status + '</span>');
             } catch (e) {
                 blockEl.insertAdjacentHTML('beforeend', '<span class="list-err">' + escapeHtml(e.message) + '</span>');
             }
         }
 
-        async function addExerciseToProgramFromRow(progId, exId, order, addExRow) {
+        async function addExerciseToProgramFromRow(progId, exId, order, comment, addExRow) {
             try {
-                const r = await fetch(api() + '/api/Workout/programs/' + progId + '/exercises?exerciseId=' + exId + '&order=' + order, { method: 'POST' });
+                let url = api() + '/api/Workout/programs/' + progId + '/exercises?exerciseId=' + exId + '&order=' + order;
+                if (comment) url += '&comment=' + encodeURIComponent(comment);
+                const r = await fetch(url, { method: 'POST' });
                 const data = await json(r);
                 if (r.ok) {
                     const ex = exercisesList.find(e => e.id === exId);
                     const name = ex ? ex.name : '—';
+                    const mgName = ex?.muscleGroup?.name || '—';
                     const peId = data && data.id ? data.id : 0;
                     const exListEl = addExRow.closest('.program-block').querySelector('.program-exercises-edit');
-                    const placeholder = exListEl.querySelector('.program-ex-item');
-                    if (placeholder && placeholder.textContent.trim().includes('Нет упражнений')) exListEl.innerHTML = '';
-                    const newRow = document.createElement('div');
-                    newRow.className = 'program-ex-item';
-                    newRow.dataset.peId = peId;
-                    newRow.innerHTML = `${order}. ${escapeHtml(name)}<button class="ex-remove danger icon-btn" data-prog-id="${progId}" data-pe-id="${peId}" title="Удалить из программы">🗑</button>`;
-                    newRow.querySelector('.ex-remove').addEventListener('click', function() {
-                        removeExerciseFromProgram(progId, peId, addExRow.closest('.program-block'));
-                    });
-                    exListEl.appendChild(newRow);
+                    const tbody = exListEl.querySelector('tbody');
+                    if (tbody) {
+                        const emptyRow = tbody.querySelector('td.program-ex-empty');
+                        if (emptyRow) emptyRow.closest('tr')?.remove();
+                        const newRow = document.createElement('tr');
+                        newRow.className = 'program-ex-item';
+                        newRow.dataset.peId = peId;
+                        newRow.innerHTML = `<td>${escapeHtml(name)}</td><td><span class="program-ex-mg">${escapeHtml(mgName)}</span></td><td><span class="program-ex-comment">${escapeHtml(comment || '')}</span></td><td><button class="ex-remove danger icon-btn" data-prog-id="${progId}" data-pe-id="${peId}" title="Удалить">🗑</button></td>`;
+                        newRow.querySelector('.ex-remove').addEventListener('click', function() {
+                            removeExerciseFromProgram(progId, peId, addExRow.closest('.program-block'));
+                        });
+                        tbody.appendChild(newRow);
+                    }
                     addExRow.querySelector('.add-ex-ex-id').value = '';
-                    const nextOrder = exListEl.querySelectorAll('.program-ex-item').length;
-                    addExRow.querySelector('.add-ex-order').value = nextOrder;
+                    const ce = addExRow.querySelector('.add-ex-comment');
+                    if (ce) ce.value = '';
                 } else addExRow.insertAdjacentHTML('beforeend', '<span class="list-err">Ошибка ' + r.status + '</span>');
             } catch (e) {
                 addExRow.insertAdjacentHTML('beforeend', '<span class="list-err">' + escapeHtml(e.message) + '</span>');

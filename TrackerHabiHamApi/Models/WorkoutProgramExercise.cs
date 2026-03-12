@@ -16,5 +16,7 @@ namespace TrackerHabiHamApi.Models
         public Exercise Exercise { get; set; } = null!;
 
         public int Order { get; set; }
+
+        public string? Comment { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using TrackerHabiHamApi.Models;
+using TrackerHabiHamApi.Models.Dto;
 using TrackerHabiHamApi.Services;
 
 namespace TrackerHabiHamApi.Controllers
@@ -99,9 +100,9 @@ namespace TrackerHabiHamApi.Controllers
 
         #region WorkoutPrograms
         [HttpGet("programs")]
-        public async Task<ActionResult<IEnumerable<WorkoutProgram>>> GetPrograms(CancellationToken ct = default)
+        public async Task<ActionResult<IEnumerable<ProgramListDto>>> GetPrograms(CancellationToken ct = default)
         {
-            var items = await _workoutProgramService.GetAllAsync(ct);
+            var items = await _workoutProgramService.GetProgramsListAsync(ct);
             return Ok(items);
         }
 
@@ -134,9 +135,9 @@ namespace TrackerHabiHamApi.Controllers
         }
 
         [HttpPost("programs/{id:int}/exercises")]
-        public async Task<ActionResult<WorkoutProgramExercise>> AddExerciseToProgram(int id, [FromQuery] int exerciseId, [FromQuery] int order, CancellationToken ct = default)
+        public async Task<ActionResult<WorkoutProgramExercise>> AddExerciseToProgram(int id, [FromQuery] int exerciseId, [FromQuery] int order, [FromQuery] string? comment = null, CancellationToken ct = default)
         {
-            var item = await _workoutProgramService.AddExerciseAsync(id, exerciseId, order, ct);
+            var item = await _workoutProgramService.AddExerciseAsync(id, exerciseId, order, comment, ct);
             return item == null ? NotFound() : Ok(item);
         }
 

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TrackerHabiHamApi.Data;
 using TrackerHabiHamApi.Models;
+using TrackerHabiHamApi.Models.Dto;
 
 namespace TrackerHabiHamApi.Services
 {
@@ -13,11 +14,39 @@ namespace TrackerHabiHamApi.Services
             _context = context;
         }
 
+        public async Task<IEnumerable<ProgramListDto>> GetProgramsListAsync(CancellationToken ct = default)
+        {
+            return await _context.WorkoutPrograms
+                .AsNoTracking()
+                .OrderByDescending(p => p.CreatedAt)
+                .Select(p => new ProgramListDto(
+                    p.Id,
+                    p.Name,
+                    p.Description,
+                    p.CreatedAt,
+                    p.Exercises
+                        .OrderBy(pe => pe.Order)
+                        .Select(pe => new ProgramExerciseDto(
+                            pe.Id,
+                            pe.Order,
+                            pe.Comment,
+                            new ExerciseBriefDto(
+                                pe.Exercise.Id,
+                                pe.Exercise.Name,
+                                pe.Exercise.Description,
+                                pe.Exercise.MuscleGroup == null
+                                    ? null
+                                    : new MuscleGroupBriefDto(pe.Exercise.MuscleGroup.Id, pe.Exercise.MuscleGroup.Name))))
+                        .ToList()))
+                .ToListAsync(ct);
+        }
+
         public async Task<IEnumerable<WorkoutProgram>> GetAllAsync(CancellationToken ct = default)
         {
             return await _context.WorkoutPrograms
                 .Include(p => p.Exercises)
                 .ThenInclude(pe => pe.Exercise)
+                .ThenInclude(e => e!.MuscleGroup)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync(ct);
         }
@@ -59,7 +88,7 @@ namespace TrackerHabiHamApi.Services
             return true;
         }
 
-        public async Task<WorkoutProgramExercise?> AddExerciseAsync(int programId, int exerciseId, int order, CancellationToken ct = default)
+        public async Task<WorkoutProgramExercise?> AddExerciseAsync(int programId, int exerciseId, int order, string? comment = null, CancellationToken ct = default)
         {
             var program = await _context.WorkoutPrograms.FindAsync([programId], ct);
             var exercise = await _context.Exercises.FindAsync([exerciseId], ct);
@@ -69,11 +98,17 @@ namespace TrackerHabiHamApi.Services
             {
                 WorkoutProgramId = programId,
                 ExerciseId = exerciseId,
-                Order = order
+                Order = order,
+                Comment = comment
             };
             _context.WorkoutProgramExercises.Add(item);
             await _context.SaveChangesAsync(ct);
-            return item;
+
+            return await _context.WorkoutProgramExercises
+                .AsNoTracking()
+                .Include(pe => pe.Exercise)
+                .ThenInclude(e => e!.MuscleGroup)
+                .FirstOrDefaultAsync(pe => pe.Id == item.Id, ct);
         }
 
         public async Task<bool> RemoveExerciseAsync(int programId, int programExerciseId, CancellationToken ct = default)
