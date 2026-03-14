@@ -169,9 +169,10 @@ namespace TrackerHabiHamApi.Controllers
         }
 
         [HttpPost("workouts")]
-        public async Task<ActionResult<Workout>> CreateWorkout([FromBody] Workout workout, CancellationToken ct = default)
+        public async Task<ActionResult<Workout>> CreateWorkout([FromBody] CreateWorkoutRequest request, CancellationToken ct = default)
         {
-            var created = await _workoutSessionService.CreateAsync(workout, ct);
+            var created = await _workoutSessionService.CreateFromProgramAsync(request, ct);
+            if (created == null) return NotFound();
             return CreatedAtAction(nameof(GetWorkout), new { id = created.Id }, created);
         }
 

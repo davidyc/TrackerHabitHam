@@ -105,20 +105,32 @@
 
     <div id="tab-workouts" class="tab-panel">
     <h2>Тренировки</h2>
+
     <div class="section">
+        <h3 style="margin-top:0; color:#50C878; font-size:1em;">Загрузка тренировок</h3>
         <div class="row">
-            <label>ProgramId:</label><input type="number" id="woProgId" placeholder="опц." style="width:80px">
-            <label>From:</label><input type="date" id="woFrom">
-            <label>To:</label><input type="date" id="woTo">
+            <label>От:</label><input type="date" id="woFrom">
+            <label>До:</label><input type="date" id="woTo">
+            <label>Программа:</label><select id="woFilterProg" style="min-width:160px"><option value="">— Все —</option></select>
             <button onclick="loadWorkouts()">Загрузить</button>
         </div>
         <div class="row">
-            <label>ProgramId:</label><input type="number" id="woCreateProgId" style="width:60px" required>
-            <label>Date:</label><input type="date" id="woDate" required>
-            <label>Notes:</label><input id="woNotes" placeholder="Заметки">
-            <button onclick="createWorkout()">Создать тренировку</button>
+            <button onclick="setWorkoutDates('week')">Неделя</button>
+            <button onclick="setWorkoutDates('2weeks')">Две недели</button>
+            <button onclick="setWorkoutDates('month')">Месяц</button>
         </div>
         <div id="workouts" class="list"></div>
+    </div>
+
+    <div class="section">
+        <h3 style="margin-top:0; color:#50C878; font-size:1em;">Создание тренировки</h3>
+        <div class="row">
+            <label>Программа:</label><select id="woCreateProg" style="min-width:180px"><option value="">— Загрузка... —</option></select>
+            <label>Дата:</label><input type="date" id="woDate" placeholder="сегодня">
+            <label>Notes:</label><input id="woNotes" placeholder="Заметки">
+            <button onclick="createWorkout()">Создать</button>
+        </div>
+        <span id="woCreateMsg" class="list-msg"></span>
     </div>
     </div>
 
@@ -151,7 +163,15 @@
                 panel.classList.add('active');
                 if (btn.dataset.tab === 'exercises') loadExercises();
                 else if (btn.dataset.tab === 'programs') loadPrograms();
-                else if (btn.dataset.tab === 'workouts') loadWorkouts();
+                else if (btn.dataset.tab === 'workouts') {
+                    const today = new Date().toISOString().slice(0, 10);
+                    const fromEl = document.getElementById('woFrom');
+                    const toEl = document.getElementById('woTo');
+                    if (!fromEl.value) fromEl.value = today;
+                    if (!toEl.value) toEl.value = today;
+                    fillWorkoutProgramDropdowns();
+                    loadWorkouts();
+                }
             });
         });
         function escapeHtml(s) { return (s || '').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -579,17 +599,49 @@
             }
         }
 
+        async function fillWorkoutProgramDropdowns() {
+            try {
+                const r = await fetch(api() + '/api/Workout/programs');
+                const list = await json(r);
+                const arr = Array.isArray(list) ? list : [];
+                const opts = '<option value="">— Все —</option>' + arr.map(p => `<option value="${p.id}">${escapeHtml(p.name || 'Программа ' + p.id)}</option>`).join('');
+                const createSel = document.getElementById('woCreateProg');
+                const filterSel = document.getElementById('woFilterProg');
+                const curCreate = createSel.value;
+                const curFilter = filterSel.value;
+                createSel.innerHTML = '<option value="">— Выберите программу —</option>' + arr.map(p => `<option value="${p.id}">${escapeHtml(p.name || 'Программа ' + p.id)}</option>`).join('');
+                filterSel.innerHTML = opts;
+                if (curCreate && [...createSel.options].some(o => o.value === curCreate)) createSel.value = curCreate;
+                if (curFilter && [...filterSel.options].some(o => o.value === curFilter)) filterSel.value = curFilter;
+            } catch (e) {
+                document.getElementById('woCreateProg').innerHTML = '<option value="">Ошибка загрузки</option>';
+                document.getElementById('woFilterProg').innerHTML = '<option value="">Ошибка загрузки</option>';
+            }
+        }
+
+        function setWorkoutDates(range) {
+            const today = new Date();
+            const to = today.toISOString().slice(0, 10);
+            let fromDate = new Date(today);
+            if (range === 'week') fromDate.setDate(today.getDate() - 7);
+            else if (range === '2weeks') fromDate.setDate(today.getDate() - 14);
+            else if (range === 'month') fromDate.setMonth(today.getMonth() - 1);
+            const from = fromDate.toISOString().slice(0, 10);
+            document.getElementById('woFrom').value = from;
+            document.getElementById('woTo').value = to;
+            loadWorkouts();
+        }
+
         async function loadWorkouts() {
             const el = document.getElementById('workouts');
+            const fromVal = document.getElementById('woFrom').value;
+            const toVal = document.getElementById('woTo').value;
+            if (!fromVal || !toVal) { el.innerHTML = '<span class="list-msg">Укажите даты</span>'; return; }
+            const progId = document.getElementById('woFilterProg').value;
+            let url = api() + '/api/Workout/workouts?from=' + fromVal + '&to=' + toVal;
+            if (progId) url += '&programId=' + progId;
             try {
-                let q = [];
-                const progId = document.getElementById('woProgId').value;
-                const from = document.getElementById('woFrom').value;
-                const to = document.getElementById('woTo').value;
-                if (progId) q.push('programId=' + progId);
-                if (from) q.push('from=' + from);
-                if (to) q.push('to=' + to);
-                const r = await fetch(api() + '/api/Workout/workouts' + (q.length ? '?' + q.join('&') : ''));
+                const r = await fetch(url);
                 const data = await json(r);
                 const list = Array.isArray(data) ? data : [];
                 el.innerHTML = list.map(w => {
@@ -609,19 +661,33 @@
         }
 
         async function createWorkout() {
-            const progId = document.getElementById('woCreateProgId').value;
-            const date = document.getElementById('woDate').value;
-            const notes = document.getElementById('woNotes').value;
-            const body = { workoutProgramId: parseInt(progId), date: date, notes: notes || null };
+            const msgEl = document.getElementById('woCreateMsg');
+            const progId = document.getElementById('woCreateProg').value;
+            if (!progId) { msgEl.textContent = 'Выберите программу'; msgEl.className = 'list-err'; return; }
+            const dateVal = document.getElementById('woDate').value;
+            const notes = document.getElementById('woNotes').value?.trim() || null;
+            const body = {
+                workoutProgramId: parseInt(progId),
+                date: dateVal || null,
+                notes: notes
+            };
             try {
                 const r = await fetch(api() + '/api/Workout/workouts', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
-                if (r.ok) loadWorkouts(); else document.getElementById('workouts').innerHTML = '<span class="list-err">Ошибка ' + r.status + '</span>';
+                if (r.ok) {
+                    msgEl.textContent = 'Создано';
+                    msgEl.className = 'status ok';
+                    loadWorkouts();
+                } else {
+                    msgEl.textContent = 'Ошибка ' + r.status;
+                    msgEl.className = 'list-err';
+                }
             } catch (e) {
-                document.getElementById('workouts').innerHTML = '<span class="list-err">Ошибка: ' + escapeHtml(e.message) + '</span>';
+                msgEl.textContent = 'Ошибка: ' + e.message;
+                msgEl.className = 'list-err';
             }
         }
 

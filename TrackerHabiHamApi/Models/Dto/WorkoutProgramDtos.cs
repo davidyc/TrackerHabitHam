@@ -20,3 +20,6 @@ public record ExerciseBriefDto(
     MuscleGroupBriefDto? MuscleGroup);
 
 public record MuscleGroupBriefDto(int Id, string Name);
+
+/// <summary>Request body for POST /workouts. Program id required; date (defaults to today) and notes optional.</summary>
+public record CreateWorkoutRequest(int WorkoutProgramId, DateOnly? Date = null, string? Notes = null);

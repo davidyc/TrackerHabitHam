@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TrackerHabiHamApi.Data;
 using TrackerHabiHamApi.Models;
+using TrackerHabiHamApi.Models.Dto;
 
 namespace TrackerHabiHamApi.Services
 {
@@ -41,8 +42,17 @@ namespace TrackerHabiHamApi.Services
                 .FirstOrDefaultAsync(w => w.Id == id, ct);
         }
 
-        public async Task<Workout> CreateAsync(Workout workout, CancellationToken ct = default)
+        public async Task<Workout?> CreateFromProgramAsync(CreateWorkoutRequest request, CancellationToken ct = default)
         {
+            var program = await _context.WorkoutPrograms.FindAsync([request.WorkoutProgramId], ct);
+            if (program == null) return null;
+
+            var workout = new Workout
+            {
+                WorkoutProgramId = request.WorkoutProgramId,
+                Date = request.Date ?? DateOnly.FromDateTime(DateTime.UtcNow),
+                Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim()
+            };
             _context.Workouts.Add(workout);
             await _context.SaveChangesAsync(ct);
             return workout;
